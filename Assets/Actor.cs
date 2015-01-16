@@ -45,7 +45,7 @@ public class Actor : AOCommon
         }
         else
         {
-            Debug.Log("Blocked");
+            Messages.M("That path is blocked.");
         }
     }
 }
