@@ -29,7 +29,7 @@ public class PlayerInput : MonoBehaviour
         {
             if (contextMenuOpen)
             {
-                if (eventSystem.currentSelectedGameObject != null && ContextMenu.Contains(eventSystem.currentSelectedGameObject.GetComponent<Button>()))
+                if (eventSystem.currentSelectedGameObject != null) // && ContextMenu.Contains(eventSystem.currentSelectedGameObject.GetComponent<Button>()))
                     return; // UI should handle this, not us.
                 else
                 {
@@ -62,7 +62,7 @@ public class PlayerInput : MonoBehaviour
                 if (actions.Count > ContextMenu.Count)
                     Debug.LogWarningFormat("PlayerInput.Update: can't show all context menu actions; need {0} but have {1} UI elements", actions.Count, ContextMenu.Count);
 
-                Vector2 pos = mouseUi; // new Vector2(mousePos.x, mousePos.y);
+                Vector2 pos = mouseUi;
 
                 for (int i = 0; i < (actions.Count > ContextMenu.Count ? ContextMenu.Count - 1 : actions.Count); i++)
                 {
