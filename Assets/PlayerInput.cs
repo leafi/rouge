@@ -11,13 +11,20 @@ public class PlayerInput : MonoBehaviour
 {
     private Canvas canvas;
     private EventSystem eventSystem;
-    private bool contextMenuOpen = false;
+    internal bool contextMenuOpen = false;
     public List<Button> ContextMenu;
+
+    private static PlayerInput pi;
+    public static PlayerInput Get()
+    {
+        return pi;
+    }
 
 	void Start()
     {
         canvas = FindObjectOfType<Canvas>();
         eventSystem = FindObjectOfType<EventSystem>();
+        pi = this;
 	}
 	
 	void Update()
@@ -51,6 +58,11 @@ public class PlayerInput : MonoBehaviour
             {
                 if (ContextMenu == null || ContextMenu.Count < 2)
                     throw new Exception("PlayerInput.ContextMenu not bound // < 2 elements available!");
+
+                // move grid pointer to clicked position & stop from moving while menu is open
+                var pointer = GridPointer.Get();
+                pointer.Hilight(mouseGrid);
+                pointer.enabled = false;
 
                 // just some test actions
                 List<Tuple<string, Action>> actions = new List<Tuple<string, Action>>();
@@ -100,5 +112,7 @@ public class PlayerInput : MonoBehaviour
         }
 
         contextMenuOpen = false;
+
+        GridPointer.Get().enabled = true;
     }
 }

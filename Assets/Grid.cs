@@ -53,6 +53,11 @@ public class Grid : MonoBehaviour
         Actors.Add(a);
     }
 
+    public IntVector2 GetCellFromMousePicker()
+    {
+        return GetCellFromRay(Camera.main.ScreenPointToRay(Input.mousePosition));
+    }
+
     public IntVector2 GetCellFromRay(Ray r)
     {
         if (r.direction.y == 0)
