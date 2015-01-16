@@ -3,6 +3,7 @@
 # =============== #
 Temp/
 Library/
+webglpreview/
 
 # UnityVS
 Assets/UnityVS.meta
