@@ -25,7 +25,7 @@ public class Actor : AOCommon
         if (moveTarget.HasValue)
         {
             var mt = moveTarget.Value;
-            var speed = MoveSpeed * Time.deltaTime;
+            var speed = MoveSpeed * Time.smoothDeltaTime;
 
             if ((mt - transform.position).sqrMagnitude <= speed * speed)
                 moveTarget = null;

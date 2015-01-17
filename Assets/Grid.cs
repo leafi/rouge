@@ -58,6 +58,32 @@ public class Grid : MonoBehaviour
         return GetCellFromRay(Camera.main.ScreenPointToRay(Input.mousePosition));
     }
 
+    public Vector2 GetFloatCellFromRay(Ray r)
+    {
+        if (r.direction.y == 0)
+        {
+            if (r.origin.y - 0.05 < gridHeight && r.origin.y + 0.05 > gridHeight)
+                return new Vector2(r.origin.x, r.origin.z);
+            else
+                throw new Exception("Grid.GetCellFromRay: Ray has no y direction & y origin isn't on the grid");
+        }
+        else
+        {
+            var d = r.direction;
+            d.Normalize();
+
+            if (r.origin.y < gridHeight && d.y < 0 || r.origin.y > gridHeight && d.y > 0)
+            {
+                d.x = -d.x;
+                d.y = -d.y;
+                d.z = -d.z;
+            }
+
+            float times = (gridHeight - r.origin.y) / d.y;
+            return new Vector2(r.origin.x + times * d.x, r.origin.z + times * d.z);
+        }
+    }
+
     public IntVector2 GetCellFromRay(Ray r)
     {
         if (r.direction.y == 0)
