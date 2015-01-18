@@ -43,7 +43,8 @@ public abstract class AOCommon : MonoBehaviour
     public virtual void Load(IConfig sav)
     {
         ResourcesPrefab = sav.GetString("__resourcesPrefab", "");
-        GetComponent<MeshRenderer>().enabled = sav.GetBoolean("__meshRendererEnabled");
+        if (sav.Contains("__meshRendererEnabled"))
+            GetComponent<MeshRenderer>().enabled = sav.GetBoolean("__meshRendererEnabled");
         sav.GetTransform("__transform", this.transform);
     }
 
@@ -58,7 +59,8 @@ public abstract class AOCommon : MonoBehaviour
         }
         sav.Set("__gameObjectName", this.gameObject.name);
         sav.Set("__instanceID", this.GetInstanceID());
-        sav.Set("__meshRendererEnabled", GetComponent<MeshRenderer>().enabled);
+        if (GetComponent<MeshRenderer>() != null)
+            sav.Set("__meshRendererEnabled", GetComponent<MeshRenderer>().enabled);
         sav.SetTransform("__transform", this.transform);
     }
 }

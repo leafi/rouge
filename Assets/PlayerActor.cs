@@ -15,6 +15,14 @@ public class PlayerActor : Actor
     private static PlayerActor pa;
     public static PlayerActor Get() { return pa; }
 
+    public override IntBounds IntBounds
+    {
+        get
+        {
+            return new IntBounds(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.z), Mathf.RoundToInt(transform.position.x) + 1, Mathf.RoundToInt(transform.position.z) + 1);
+        }
+    }
+
     public override void Start()
     {
         base.Start();

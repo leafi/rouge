@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+using Nini.Config;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,10 +23,11 @@ public class Messages : MonoBehaviour
 
     List<string> lines = new List<string>();
 
-    public void AddMessageF(string fmt, params object[] args) { AddMessage(string.Format(fmt, args)); }
-    public void AddMessage(string text)
+    public void AddMessageF(string fmt, params object[] args) { lines.Add(string.Format(fmt, args)); updateText(); }
+    public void AddMessage(string text) { lines.Add(text); updateText(); }
+
+    private void updateText()
     {
-        lines.Add(text);
         GetComponent<Text>().text = string.Join("\n", lines.GetRange(Mathf.Max(lines.Count - 5, 0), Mathf.Min(lines.Count, 5)).ToArray());
     }
 
@@ -36,4 +39,19 @@ public class Messages : MonoBehaviour
 	void Update()
     {
 	}
+
+    public void Load(IConfig sav)
+    {
+        lines.Clear();
+        for (int i = 0; i < sav.GetInt("linesCount"); i++)
+            lines.Add(sav.GetString("lines" + i));
+        updateText();
+    }
+
+    public void Save(IConfig sav)
+    {
+        sav.Set("linesCount", lines.Count);
+        for (int i = 0; i < lines.Count; i++)
+            sav.Set("lines" + i, lines[i]);
+    }
 }

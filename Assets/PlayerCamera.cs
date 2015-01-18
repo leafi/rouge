@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Nini.Config;
 
 public class PlayerCamera : MonoBehaviour
 {
@@ -86,4 +87,14 @@ public class PlayerCamera : MonoBehaviour
         if (theCamera.transform.position.y > MaxCameraHeight)
             theCamera.transform.position = new Vector3(theCamera.transform.position.x, MaxCameraHeight, theCamera.transform.position.z);
 	}
+
+    public void Load(IConfig sav)
+    {
+        sav.GetTransform("cameraTransform", theCamera.transform);
+    }
+
+    public void Save(IConfig sav)
+    {
+        sav.SetTransform("cameraTransform", theCamera.transform);
+    }
 }

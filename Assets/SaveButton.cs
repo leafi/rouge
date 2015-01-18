@@ -7,12 +7,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
-public class NewMonoBehaviour : MonoBehaviour
+public class SaveButton : MonoBehaviour
 {
 	void Start()
     {
-	    
+        GetComponent<Button>().onClick.AddListener(() => { GameSaveLoad.Save(); });
 	}
 	
 	void Update()

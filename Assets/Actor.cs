@@ -12,7 +12,7 @@ public class Actor : AOCommon
 
 	public virtual void Start()
     {
-
+        Grid.Get().AddActor(this);
 	}
 	
 	public virtual void Update()
@@ -65,6 +65,6 @@ public class Actor : AOCommon
         sav.Set("Actor_MoveSpeed", MoveSpeed);
         sav.Set("Actor_moveTargetHasValue", moveTarget.HasValue);
         if (moveTarget.HasValue)
-            sav.Set("Actor_moveTargetValue", moveTarget.Value);
+            sav.SetVector3("Actor_moveTargetValue", moveTarget.Value);
     }
 }

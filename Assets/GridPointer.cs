@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 
+using Nini.Config;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -35,4 +37,18 @@ public class GridPointer : MonoBehaviour
         if (cell.x != lastCell.x || cell.z != lastCell.z)
             Hilight(cell);
 	}
+
+    public void Save(IConfig sav)
+    {
+        sav.Set("meshRendererEnabled", GetComponent<MeshRenderer>().enabled);
+        sav.SetTransform("transform", transform);
+        //sav.Set("enabled", enabled);
+    }
+
+    public void Load(IConfig sav)
+    {
+        GetComponent<MeshRenderer>().enabled = sav.GetBoolean("meshRendererEnabled");
+        sav.GetTransform("transform", transform);
+        enabled = true;
+    }
 }

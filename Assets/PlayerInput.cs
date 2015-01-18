@@ -34,16 +34,14 @@ public class PlayerInput : MonoBehaviour
 
         if (lmb || rmb)
         {
+            if (eventSystem.currentSelectedGameObject != null) // && ContextMenu.Contains(eventSystem.currentSelectedGameObject.GetComponent<Button>()))
+                return; // UI should handle this, not us.
+
             if (contextMenuOpen)
             {
-                if (eventSystem.currentSelectedGameObject != null) // && ContextMenu.Contains(eventSystem.currentSelectedGameObject.GetComponent<Button>()))
-                    return; // UI should handle this, not us.
-                else
-                {
-                    hideContextMenu();
-                    if (lmb)
-                        return;
-                }
+                hideContextMenu();
+                if (lmb)
+                    return;
             }
 
             var mousePos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
@@ -58,11 +56,6 @@ public class PlayerInput : MonoBehaviour
             {
                 if (ContextMenu == null || ContextMenu.Count < 2)
                     throw new Exception("PlayerInput.ContextMenu not bound // < 2 elements available!");
-
-                // move grid pointer to clicked position & stop from moving while menu is open
-                var pointer = GridPointer.Get();
-                pointer.Hilight(mouseGrid);
-                pointer.enabled = false;
 
                 // just some test actions
                 List<Tuple<string, Action>> actions = new List<Tuple<string, Action>>();
@@ -83,6 +76,10 @@ public class PlayerInput : MonoBehaviour
 
                 if (actions.Count > 0)
                 {
+                    // move grid pointer to clicked position & stop from moving while menu is open
+                    var pointer = GridPointer.Get();
+                    pointer.Hilight(mouseGrid);
+                    pointer.enabled = false;
 
                     // put actions in UI elements
                     if (actions.Count > ContextMenu.Count)
