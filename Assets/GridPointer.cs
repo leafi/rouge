@@ -24,7 +24,7 @@ public class GridPointer : MonoBehaviour
     public void Hilight(int gx, int gz)
     {
         lastCell = new IntVector2(gx, gz);
-        meshRenderer.enabled = !Grid.Get().FindObstacles(gx, gz).Any();
+        meshRenderer.enabled = !Grid.Get().IsBlocked(gx, gz);
         transform.position = new Vector3(gx, transform.position.y, gz);
     }
 	

@@ -10,12 +10,12 @@ public class Actor : AOCommon
     public float MoveSpeed;
     private Vector3? moveTarget = null;
 
-	void Start()
+	public virtual void Start()
     {
 
 	}
 	
-	void Update()
+	public virtual void Update()
     {
         updateMoveTarget();
 	}
@@ -47,5 +47,24 @@ public class Actor : AOCommon
         {
             Messages.M("That path is blocked.");
         }
+    }
+
+    public override void Load(Nini.Config.IConfig sav)
+    {
+        base.Load(sav);
+        MoveSpeed = sav.GetFloat("Actor_MoveSpeed");
+        if (sav.GetBoolean("Actor_moveTargetHasValue"))
+            moveTarget = sav.GetVector3("Actor_moveTargetValue");
+        else
+            moveTarget = null;
+    }
+
+    public override void Save(Nini.Config.IConfig sav)
+    {
+        base.Save(sav);
+        sav.Set("Actor_MoveSpeed", MoveSpeed);
+        sav.Set("Actor_moveTargetHasValue", moveTarget.HasValue);
+        if (moveTarget.HasValue)
+            sav.Set("Actor_moveTargetValue", moveTarget.Value);
     }
 }

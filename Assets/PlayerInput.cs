@@ -66,36 +66,52 @@ public class PlayerInput : MonoBehaviour
 
                 // just some test actions
                 List<Tuple<string, Action>> actions = new List<Tuple<string, Action>>();
-                actions.Add(Tuple.Create<string, Action>("Test action 1", () => { Debug.Log("TA1 fired"); }));
-                actions.Add(Tuple.Create<string, Action>("Test action 2", () => Debug.Log("TA2 fired")));
-                actions.Add(Tuple.Create<string, Action>("Test action 3", () => Debug.Log("TA3 fired")));
-                
-                // put actions in UI elements
-                if (actions.Count > ContextMenu.Count)
-                    Debug.LogWarningFormat("PlayerInput.Update: can't show all context menu actions; need {0} but have {1} UI elements", actions.Count, ContextMenu.Count);
 
-                Vector2 pos = mouseUi;
+                var playerActor = PlayerActor.Get();
+                foreach (Actor a in Grid.Get().FindActors(mouseGrid))
+                    foreach (GameAction ga in a.Actions)
+                        if (ga.Enabled)
+                            actions.Add(Tuple.Create<string, Action>(ga.GetName(playerActor, a), () => { ga.Do(playerActor, a); }));
+                foreach (Obstacle o in Grid.Get().FindObstacles(mouseGrid))
+                    foreach (GameAction ga in o.Actions)
+                        if (ga.Enabled)
+                            actions.Add(Tuple.Create<string, Action>(ga.GetName(playerActor, o), () => { ga.Do(playerActor, o); }));
 
-                for (int i = 0; i < (actions.Count > ContextMenu.Count ? ContextMenu.Count - 1 : actions.Count); i++)
+                //actions.Add(Tuple.Create<string, Action>("Test action 1", () => { Debug.Log("TA1 fired"); }));
+                //actions.Add(Tuple.Create<string, Action>("Test action 2", () => Debug.Log("TA2 fired")));
+                //actions.Add(Tuple.Create<string, Action>("Test action 3", () => Debug.Log("TA3 fired")));
+
+                if (actions.Count > 0)
                 {
-                    ContextMenu[i].gameObject.SetActive(true);
-                    ContextMenu[i].GetComponentInChildren<Text>().text = actions[i].Item1;
-                    ContextMenu[i].onClick.AddListener(new UnityEngine.Events.UnityAction(hideContextMenu));
-                    ContextMenu[i].onClick.AddListener(new UnityEngine.Events.UnityAction(actions[i].Item2));
-                    ((RectTransform)ContextMenu[i].transform).anchoredPosition = pos;
-                    pos.y -= ((RectTransform)ContextMenu[i].transform).sizeDelta.y;
-                }
 
-                if (actions.Count > ContextMenu.Count)
-                {
-                    var last = ContextMenu[ContextMenu.Count - 1];
-                    last.gameObject.SetActive(true);
-                    last.GetComponentInChildren<Text>().text = "More... (TODO)";
-                    last.onClick.AddListener(new UnityEngine.Events.UnityAction(hideContextMenu));
-                    ((RectTransform)last.transform).anchoredPosition = pos;
-                }
+                    // put actions in UI elements
+                    if (actions.Count > ContextMenu.Count)
+                        Debug.LogWarningFormat("PlayerInput.Update: can't show all context menu actions; need {0} but have {1} UI elements", actions.Count, ContextMenu.Count);
 
-                contextMenuOpen = true;
+                    Vector2 pos = mouseUi;
+
+                    for (int i = 0; i < (actions.Count > ContextMenu.Count ? ContextMenu.Count - 1 : actions.Count); i++)
+                    {
+                        ContextMenu[i].gameObject.SetActive(true);
+                        ContextMenu[i].GetComponentInChildren<Text>().text = actions[i].Item1;
+                        ContextMenu[i].onClick.AddListener(new UnityEngine.Events.UnityAction(actions[i].Item2));
+                        ContextMenu[i].onClick.AddListener(new UnityEngine.Events.UnityAction(hideContextMenu));
+                        ((RectTransform)ContextMenu[i].transform).anchoredPosition = pos;
+                        pos.y -= ((RectTransform)ContextMenu[i].transform).sizeDelta.y;
+                    }
+
+                    if (actions.Count > ContextMenu.Count)
+                    {
+                        var last = ContextMenu[ContextMenu.Count - 1];
+                        last.gameObject.SetActive(true);
+                        last.GetComponentInChildren<Text>().text = "More... (TODO)";
+                        last.onClick.AddListener(new UnityEngine.Events.UnityAction(hideContextMenu));
+                        ((RectTransform)last.transform).anchoredPosition = pos;
+                    }
+
+                    contextMenuOpen = true;
+
+                }
             }
         }
 	}
@@ -114,5 +130,6 @@ public class PlayerInput : MonoBehaviour
         contextMenuOpen = false;
 
         GridPointer.Get().enabled = true;
+        GridPointer.Get().Hilight(Grid.Get().GetCellFromMousePicker());
     }
 }

@@ -15,8 +15,27 @@ public class PlayerActor : Actor
     private static PlayerActor pa;
     public static PlayerActor Get() { return pa; }
 
-    void Start()
+    public override void Start()
     {
+        base.Start();
         pa = this;
+    }
+
+    public override void Load(Nini.Config.IConfig sav)
+    {
+        base.Load(sav);
+        HP = sav.GetInt("PlayerActor_HP");
+        MP = sav.GetInt("PlayerActor_MP");
+        Asleep = sav.GetBoolean("PlayerActor_Asleep");
+        Dazed = sav.GetInt("PlayerActor_Dazed");
+    }
+
+    public override void Save(Nini.Config.IConfig sav)
+    {
+        base.Save(sav);
+        sav.Set("PlayerActor_HP", HP);
+        sav.Set("PlayerActor_MP", MP);
+        sav.Set("PlayerActor_Asleep", Asleep);
+        sav.Set("PlayerActor_Dazed", Dazed);
     }
 }
