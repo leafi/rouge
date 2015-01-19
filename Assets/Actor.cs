@@ -9,6 +9,7 @@ public class Actor : AOCommon
 {
     public float MoveSpeed;
     private Vector3? moveTarget = null;
+    private List<Vector3> moveTargetList = new List<Vector3>();
 
 	public virtual void Start()
     {
@@ -28,7 +29,17 @@ public class Actor : AOCommon
             var speed = MoveSpeed * Time.smoothDeltaTime;
 
             if ((mt - transform.position).sqrMagnitude <= speed * speed)
-                moveTarget = null;
+            {
+                // TODO: recalc!!!!!
+                if (moveTargetList.Count == 0)
+                    moveTarget = null;
+                else
+                {
+                    moveTarget = moveTargetList[0];
+                    moveTargetList.RemoveAt(0);
+                    mt = moveTarget.Value;
+                }
+            }
 
             transform.position = Vector3.MoveTowards(transform.position, mt, speed);
         }
@@ -41,7 +52,12 @@ public class Actor : AOCommon
 
         if (!Grid.Get().IsBlocked(gridX, gridZ))
         {
-            moveTarget = new Vector3(gridX, transform.position.y, gridZ);
+            //moveTarget = new Vector3(gridX, transform.position.y, gridZ);
+            // TODO: better src!!!
+            var li = new Rayman().FindPath(new IntVector2(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.z)), new IntVector2(gridX, gridZ));
+            moveTargetList = li.ConvertAll<Vector3>((iv2) => new Vector3(iv2.x, transform.position.y, iv2.z));
+            moveTarget = moveTargetList[0];
+            moveTargetList.RemoveAt(0);
         }
         else
         {
@@ -51,6 +67,10 @@ public class Actor : AOCommon
 
     public override void Load(Nini.Config.IConfig sav)
     {
+        //
+        // TODO: update for multipath
+        //
+
         base.Load(sav);
         MoveSpeed = sav.GetFloat("Actor_MoveSpeed");
         if (sav.GetBoolean("Actor_moveTargetHasValue"))
@@ -61,6 +81,10 @@ public class Actor : AOCommon
 
     public override void Save(Nini.Config.IConfig sav)
     {
+        //
+        // TODO: update for multipath
+        //
+
         base.Save(sav);
         sav.Set("Actor_MoveSpeed", MoveSpeed);
         sav.Set("Actor_moveTargetHasValue", moveTarget.HasValue);
