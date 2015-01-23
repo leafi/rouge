@@ -4,23 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-public class Globox
-{
-    public IntBounds Bounds;
-    public List<int> Neighbours = new List<int>();
-}
+using EpPathFinding.cs;
 
 public class Rayman
 {
-    public List<Globox> BoxNa = new List<Globox>();
-    public bool[,] Blocked;
-    public int[,] CellOwnership;
-    public int[,] RightMinesweeper;
-    public int[,] DownMinesweeper;
-
+    public bool[][] Walkable;
     public int offX;
     public int offZ;
+
+    public StaticGrid EGrid;
 
     public Rayman()
     {
@@ -44,15 +36,19 @@ public class Rayman
             Mz = Mathf.Max(Mz, ib.maxZ);
         }
 
-        Debug.LogFormat("total FreeNa grid bounds: {0}x{1}", Mx - mx, Mz - mz);
+        Debug.LogFormat("total FreeNa grid bounds: {0}x{1}  // {2}{3}", Mx - mx, Mz - mz, Mx - mx + 3, Mz - mz + 3);
 
-        offX = mx;
-        offZ = mz;
+        offX = mx - 1;
+        offZ = mz - 1;
 
-        Blocked = new bool[Mx - mx + 1, Mz - mz + 1];
-        CellOwnership = new int[Mx - mx + 1, Mz - mz + 1];
-        RightMinesweeper = new int[Mx - mx + 1, Mz - mz + 1];
-        DownMinesweeper = new int[Mx - mx + 1, Mz - mz + 1];
+        Walkable = new bool[Mx - mx + 3][];
+
+        for (int i = 0; i < Walkable.Length; i++)
+        {
+            Walkable[i] = new bool[Mz - mz + 3];
+            for (int j = 0; j < Walkable[i].Length; j++)
+                Walkable[i][j] = true;
+        }
 
         //
         // mark up 2D bool grid
@@ -63,181 +59,55 @@ public class Rayman
             for (int z = ib.minZ; z <= ib.maxZ; z++)
                 for (int x = ib.minX; x <= ib.maxX; x++)
                 {
-                    Blocked[x - offX, z - offZ] = true;
-                    CellOwnership[x - offX, z - offZ] = -1;
+                    Walkable[x - offX][z - offZ] = false;
                 }
         }
 
-        var lenZ = Mz - mz + 1;
-        var lenX = Mx - mx + 1;
-
-        //
-        // play right minesweeper
-        //
-        for (int z = 0; z < lenZ; z++)
-        {
-            RightMinesweeper[0, z] = Blocked[0, z] ? 0 : 1;
-            for (int x = 1; x < lenX; x++)
-                RightMinesweeper[x, z] = Blocked[x, z] ? 0 : RightMinesweeper[x - 1, z] + 1;
-        }
-
-        //
-        // X MINESW DEBUG
-        // 
-        Debug.Log("Right Minesweeper:");
-        var srm = "";
-        for (int z = 0; z < lenZ; z++)
-        {
-            for (int x = 0; x < lenX; x++)
-                srm += RightMinesweeper[x, z];
-            srm += "\n";
-        }
-        Debug.LogWarning(srm);
-
-        //
-        // play down minesweeper
-        // 
-        for (int x = 0; x < lenX; x++)
-        {
-            DownMinesweeper[x, 0] = Blocked[x, 0] ? 0 : 1;
-            for (int z = 1; z < lenZ; z++)
-                DownMinesweeper[x, z] = Blocked[x, z] ? 0 : DownMinesweeper[x, z - 1] + 1;
-        }
-
-        BoxNa.Add(new Globox()); // 0 is trash
-
-        // 
-        // Y MINESW DEBUG
-        //
-        Debug.Log("Down Minesweeper:");
-        var sdm = "";
-        for (int z = 0; z < lenZ; z++)
-        {
-            for (int x = 0; x < lenX; x++)
-                sdm += DownMinesweeper[x, z];
-            sdm += "\n";
-        }
-        Debug.LogWarning(sdm);
-
-        //
-        // grow rectangles
-        // 
-        for (int z = lenZ - 1; z >= 0; z--)
-        {
-            for (int x = lenX - 1; x >= 0; x--)
-            {
-                if (CellOwnership[x, z] == 0)
-                {
-                    if (Blocked[x, z])
-                        Debug.LogErrorFormat("considering blocked cell at {0},{1}", x, z);
-                    // Unassigned! Make a new rect and start growing it.
-                    var r = BoxNa.Count;
-                    //CellOwnership[x, z] = r; // already covered below
-                    var glo = new Globox();
-                    
-                    glo.Bounds.maxX = x;
-                    glo.Bounds.maxZ = z;
-
-                    // work out what the minesweeper value SHOULD be if this thing wasn't utterly fucking broken
-                    var mmx = x - RightMinesweeper[x, z] + 1;
-                    var mmz = z - DownMinesweeper[x, z] + 1;
-
-                    var minDms = DownMinesweeper[x, z];
-                    for (int i = mmx; i < x; i++)
-                        minDms = DownMinesweeper[i, z] < minDms ? DownMinesweeper[i, z] : minDms;
-                    var minRms = RightMinesweeper[x, z];
-                    for (int j = mmz; j < z; j++)
-                        minRms = RightMinesweeper[x, j] < minRms ? RightMinesweeper[x, j] : minRms;
-
-                    // so, we can now pick from either minRms&DownMinesweeper or minDms&RightMinesweeper
-                    if (minDms * RightMinesweeper[x, z] > minRms * DownMinesweeper[x, z])
-                    {
-                        // grow rect up-left
-                        glo.Bounds.minX = x - RightMinesweeper[x, z] + 1;
-                        glo.Bounds.minZ = z - minDms + 1;
-                    }
-                    else
-                    {
-                        // grow rect up-left
-                        glo.Bounds.minX = x - minRms + 1;
-                        glo.Bounds.minZ = z - DownMinesweeper[x, z] + 1;
-                    }
-
-                    // mark cell ownership (possibly overwriting!)
-                    for (int z2 = glo.Bounds.minZ; z2 <= glo.Bounds.maxZ; z2++)
-                        for (int x2 = glo.Bounds.minX; x2 <= glo.Bounds.maxX; x2++)
-                        {
-                            CellOwnership[x2, z2] = r;
-                            if (Blocked[x2, z2])
-                                Debug.LogErrorFormat("overwrote cell at {0},{1} working from {2},{3}", x2, z2, x, z);
-                        }
-
-                    BoxNa.Add(glo);
-                }
-            }
-        }
-
-        // DBG CellOwnership
-        var s = "";
-        for (int z = 0; z < lenZ; z++)
-        {
-            for (int x = 0; x < lenX; x++)
-                s += CellOwnership[x, z] == -1 ? "#" : CellOwnership[x, z].ToString();
-            s += "\n";
-        }
-        Debug.LogWarning(s);
-
-        //
-        // find rectangle neighbours (( O(num rectangles^2) !! ))
-        // 
-        for (int i = 1; i < BoxNa.Count; i++)
-        {
-            var ib = BoxNa[i].Bounds;
-
-            for (int j = 1; j < BoxNa.Count; j++)
-            {    
-                var jb = BoxNa[j].Bounds;
-
-                //if (((ib.minX >= jb.minX && ib.minX <= jb.maxX) || (ib.minZ >= jb.minZ && ib.minZ <= jb.maxZ))
-                    //&& ((ib.maxX ))
-
-                var minxin = (ib.minX >= jb.minX && ib.minX <= jb.maxX);
-                var minzin = (ib.minZ >= jb.minZ && ib.minZ <= jb.maxZ);
-                var maxxin = (ib.maxX >= jb.minX && ib.maxX <= jb.maxX);
-                var maxzin = (ib.maxZ >= jb.minZ && ib.maxZ <= jb.maxZ);
-
-                if ((minxin || maxxin) && (minzin || maxzin))
-                    BoxNa[j].Neighbours.Add(i);
-            }
-        }
+        // feed to EpPathFinding.cs
+        EGrid = new StaticGrid(Mx - mx + 3, Mz - mz + 3, Walkable);
     }
 
-    public List<IntVector2> FindPath(IntVector2 src, IntVector2 dst)
+    public IEnumerable<IntVector2> FindPath(IntVector2 start, IntVector2 end)
     {
-        var li = new List<IntVector2>();
+        bool startPosInBoundsX = start.x - offX >= 0 && start.x - offX < Walkable.Length;
+        bool startPosInBoundsZ = start.z - offZ >= 0 && start.z - offZ < Walkable[0].Length;
+        bool endPosInBoundsX = end.x - offX >= 0 && end.x - offX < Walkable.Length;
+        bool endPosInBoundsZ = end.z - offZ >= 0 && end.z - offZ < Walkable[0].Length;
 
-        // IV2s are structs thank god
-        src.x -= offX;
-        src.z -= offZ;
-        dst.x -= offX;
-        dst.z -= offZ;
+        var maxX = Walkable.Length - 1;
+        var maxZ = Walkable[0].Length - 1;
+        var minX = 0;
+        var minZ = 0;
 
-        // TODO: clamp & add post-op point if dst is outside collision area
+        var gspX = startPosInBoundsX ? start.x - offX : start.x - offX > 0 ? Walkable.Length - 1 : 0;
+        var gspZ = startPosInBoundsZ ? start.z - offZ : start.z - offZ > 0 ? Walkable[0].Length - 1 : 0;
+        var gepX = endPosInBoundsX ? end.x - offX : end.x - offX > 0 ? Walkable.Length - 1 : 0;
+        var gepZ = endPosInBoundsZ ? end.z - offZ : end.z - offZ > 0 ? Walkable[0].Length - 1 : 0;
 
-        // is the dst in the same rectangle as the src?
-        if (BoxNa[CellOwnership[src.x, src.z]].Bounds.Contains(dst.x, dst.z))
+        if ((gspX == maxX && gepX == maxX) || (gspX == minX && gepX == minX) || (gspZ == maxZ && gepZ == maxZ) || (gspZ == minZ && gepZ == minZ))
         {
-            li.Add(new IntVector2(dst.x + offX, dst.z + offZ));
-            return li;
+            // Early return. (TODO: should be able to handle all cases where both nodes are out of bounds, not only when on same side of collision grid :<)
+            // (maybe do full pathfind, and if all nodes are on the border then roughly follow the path delta but then snap start & end?)
+            return new IntVector2[] { start, end };
         }
 
-        // otherwise...
-        Debug.LogFormat("src in rect {0}, dst in rect {1}", CellOwnership[src.x, src.z], CellOwnership[dst.x, dst.z]);
+        GridPos startPos = new GridPos(gspX, gspZ);
+        GridPos endPos = new GridPos(gepX, gepZ);
+        //GridPos startPos = new GridPos(startPosInBoundsX ? start.x - offX : start.x - offX >= 0 ? )
 
-        // !!TEMP!!;
-        
-        li.Add(new IntVector2(dst.x + offX, dst.z + offZ));
-        return li;
+        //GridPos startPos = new GridPos(start.x - offX, start.z - offZ);
+        //GridPos endPos = new GridPos(end.x - offX, end.z - offZ);
+
+        JumpPointParam jpp = new JumpPointParam(EGrid, startPos, endPos,true, true, true, HeuristicMode.EUCLIDEAN);
+
+        List<GridPos> results = JumpPointFinder.FindPath(jpp);
+
+        if (!startPosInBoundsX || !startPosInBoundsZ)
+            results.Insert(0, new GridPos(start.x - offX, start.z - offZ));
+        if ((!endPosInBoundsX || !endPosInBoundsZ) && endPos == results[results.Count - 1])
+            results.Add(new GridPos(end.x - offX, end.z - offZ));
+
+        return results.ConvertAll<IntVector2>((gp) => new IntVector2(gp.x + offX, gp.y + offZ));
     }
 }
 

@@ -55,7 +55,7 @@ public class Actor : AOCommon
             //moveTarget = new Vector3(gridX, transform.position.y, gridZ);
             // TODO: better src!!!
             var li = new Rayman().FindPath(new IntVector2(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.z)), new IntVector2(gridX, gridZ));
-            moveTargetList = li.ConvertAll<Vector3>((iv2) => new Vector3(iv2.x, transform.position.y, iv2.z));
+            moveTargetList = li.ToList().ConvertAll<Vector3>((iv2) => new Vector3(iv2.x, transform.position.y, iv2.z));
             moveTarget = moveTargetList[0];
             moveTargetList.RemoveAt(0);
         }

@@ -157,8 +157,8 @@ public class Grid : MonoBehaviour
         var max = transform.TransformPoint(mesh.bounds.max);
         var mx = min.x < max.x ? Mathf.RoundToInt(min.x) : Mathf.RoundToInt(max.x);
         var mz = min.z < max.z ? Mathf.RoundToInt(min.z) : Mathf.RoundToInt(max.z);
-        var Mx = max.x < min.x ? Mathf.RoundToInt(max.x) : Mathf.RoundToInt(min.x);
-        var Mz = max.z < min.z ? Mathf.RoundToInt(max.z) : Mathf.RoundToInt(min.z);
+        var Mx = max.x > min.x ? Mathf.RoundToInt(max.x) : Mathf.RoundToInt(min.x);
+        var Mz = max.z > min.z ? Mathf.RoundToInt(max.z) : Mathf.RoundToInt(min.z);
 
         return new IntBounds(mx, mz, Mx, Mz);
     }
