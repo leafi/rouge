@@ -23,9 +23,16 @@ public class PlayerActor : Actor
         }
     }
 
+    public PlayerActor()
+    {
+        OnPreGridMove += delegate { Tick.NextPre(); };
+        OnPostGridMove += delegate { Tick.NextPost(); };
+    }
+
     public override void Start()
     {
         base.Start();
+        Tick.Init();
         pa = this;
     }
 

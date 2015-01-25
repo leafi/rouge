@@ -14,6 +14,21 @@ public class Rayman
 
     public StaticGrid EGrid;
 
+    private JumpPointParam jpp = null;
+
+    private static Rayman r = null;
+
+    public static void Rebuild()
+    {
+        //Debug.Log("RB");
+        r = new Rayman();
+    }
+
+    public static Rayman Get()
+    {
+        return r;
+    }
+
     public Rayman()
     {
         List<IntBounds> obstacleBounds = new List<IntBounds>();
@@ -36,7 +51,7 @@ public class Rayman
             Mz = Mathf.Max(Mz, ib.maxZ);
         }
 
-        Debug.LogFormat("total FreeNa grid bounds: {0}x{1}  // {2}{3}", Mx - mx, Mz - mz, Mx - mx + 3, Mz - mz + 3);
+        //Debug.LogFormat("total FreeNa grid bounds: {0}x{1}  // {2}{3}", Mx - mx, Mz - mz, Mx - mx + 3, Mz - mz + 3);
 
         offX = mx - 1;
         offZ = mz - 1;
@@ -67,8 +82,10 @@ public class Rayman
         EGrid = new StaticGrid(Mx - mx + 3, Mz - mz + 3, Walkable);
     }
 
-    public IEnumerable<IntVector2> FindPath(IntVector2 start, IntVector2 end)
+    public List<IntVector2> FindPath(IntVector2 start, IntVector2 end)
     {
+        //Debug.Log("FP");
+
         bool startPosInBoundsX = start.x - offX >= 0 && start.x - offX < Walkable.Length;
         bool startPosInBoundsZ = start.z - offZ >= 0 && start.z - offZ < Walkable[0].Length;
         bool endPosInBoundsX = end.x - offX >= 0 && end.x - offX < Walkable.Length;
@@ -88,7 +105,7 @@ public class Rayman
         {
             // Early return. (TODO: should be able to handle all cases where both nodes are out of bounds, not only when on same side of collision grid :<)
             // (maybe do full pathfind, and if all nodes are on the border then roughly follow the path delta but then snap start & end?)
-            return new IntVector2[] { start, end };
+            return new IntVector2[] { end }.ToList();
         }
 
         GridPos startPos = new GridPos(gspX, gspZ);
@@ -98,13 +115,25 @@ public class Rayman
         //GridPos startPos = new GridPos(start.x - offX, start.z - offZ);
         //GridPos endPos = new GridPos(end.x - offX, end.z - offZ);
 
-        JumpPointParam jpp = new JumpPointParam(EGrid, startPos, endPos,true, true, true, HeuristicMode.EUCLIDEAN);
-
+        //Debug.LogFormat("{0} {1} {2} {3} {4} {5} // {6} {7}", offX, offZ, gspX, gspZ, gepX, gepZ, Walkable.Length - 1, Walkable[0].Length - 1);
+        if (jpp == null)
+            jpp = new JumpPointParam(EGrid, startPos, endPos, true, true, true, HeuristicMode.EUCLIDEAN);
+        else
+            jpp.Reset(startPos, endPos);
+        
         List<GridPos> results = JumpPointFinder.FindPath(jpp);
 
-        if (!startPosInBoundsX || !startPosInBoundsZ)
-            results.Insert(0, new GridPos(start.x - offX, start.z - offZ));
+        //if (!startPosInBoundsX || !startPosInBoundsZ)
+        //    results.Insert(0, new GridPos(start.x - offX, start.z - offZ));
         if ((!endPosInBoundsX || !endPosInBoundsZ) && endPos == results[results.Count - 1])
+            results.Add(new GridPos(end.x - offX, end.z - offZ));
+
+        // Postprocess: Returned first point must never be the same as what was passed in.
+        if (results.Count > 0 && results[0].x + offX == start.x && results[0].y + offZ == start.z)
+            results.RemoveAt(0);
+
+        // Postprocess: If list is empty, just put in the end point. This overrides the 'don't return start pos' rule.
+        if (results.Count == 0)
             results.Add(new GridPos(end.x - offX, end.z - offZ));
 
         return results.ConvertAll<IntVector2>((gp) => new IntVector2(gp.x + offX, gp.y + offZ));

@@ -23,15 +23,6 @@ public struct IntBounds
     public override string ToString() { return "(" + minX + "," + minZ + ") -> (" + maxX + "," + maxZ + ")"; }
 }
 
-public struct IntVector2
-{
-    public int x;
-    public int z;
-
-    public IntVector2(int x, int z) { this.x = x; this.z = z; }
-    public override string ToString() { return "(" + x + "," + z + ")"; }
-}
-
 public class Grid : MonoBehaviour
 {
     // TODO: 2d octree

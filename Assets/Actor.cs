@@ -9,48 +9,99 @@ public class Actor : AOCommon
 {
     public float MoveSpeed;
     private Vector3? moveTarget = null;
-    private List<Vector3> moveTargetList = new List<Vector3>();
+
+    private Vector3 nextMove;
+
+    private IntVector2 position;
+    private bool mustRecalculatePath;
+    private Action mustRecalculatePathAction;
+
+    public event Action<IntVector2, IntVector2> OnPreGridMove;
+    public event Action<IntVector2, IntVector2> OnPostGridMove;
 
 	public virtual void Start()
     {
         Grid.Get().AddActor(this);
+        position.x = Mathf.RoundToInt(this.transform.position.x);
+        position.z = Mathf.RoundToInt(this.transform.position.z);
 	}
+
+    public Actor() : base()
+    {
+        mustRecalculatePathAction = new Action(() => mustRecalculatePath = true);
+        Tick.Post.Add(mustRecalculatePathAction);
+    }
+
+    ~Actor()
+    {
+        Tick.Post.Remove(mustRecalculatePathAction);
+    }
 	
 	public virtual void Update()
     {
-        updateMoveTarget();
+        var nextPositionF = updateMoveTarget();
+
+        if (position.x != Mathf.RoundToInt(nextPositionF.x) || position.z != Mathf.RoundToInt(nextPositionF.z))
+        {
+            IntVector2 nextPosition = new IntVector2(Mathf.RoundToInt(nextPositionF.x), Mathf.RoundToInt(nextPositionF.z));
+
+            if (OnPreGridMove != null)
+                OnPreGridMove(position, nextPosition);
+
+            transform.position = nextPositionF;
+
+            if (OnPostGridMove != null)
+                OnPostGridMove(position, nextPosition);
+
+            position = nextPosition;
+        }
+        else
+            transform.position = nextPositionF;
 	}
 
-    private void updateMoveTarget()
+    private void recalculatePath()
+    {
+        //Debug.LogFormat("{0} -> {1}", transform.position.ToIntVector2().ToString(), moveTarget.Value.ToIntVector2().ToString());
+        var l = Rayman.Get().FindPath(transform.position.ToIntVector2(), moveTarget.Value.ToIntVector2());
+        //Debug.LogWarningFormat("p_len: {0}", l.Count);
+        var np = l[0];
+        nextMove = new Vector3(np.x, transform.position.y, np.z);
+        mustRecalculatePath = false;
+    }
+
+    private Vector3 updateMoveTarget()
     {
         if (moveTarget.HasValue)
         {
-            var mt = moveTarget.Value;
+            var nm = nextMove;
             var speed = MoveSpeed * Time.smoothDeltaTime;
 
-            if ((mt - transform.position).sqrMagnitude <= speed * speed)
+            if ((moveTarget.Value - transform.position).sqrMagnitude <= speed * speed)
             {
-                // TODO: recalc!!!!!
-                if (moveTargetList.Count == 0)
-                    moveTarget = null;
-                else
-                {
-                    moveTarget = moveTargetList[0];
-                    moveTargetList.RemoveAt(0);
-                    mt = moveTarget.Value;
-                }
+                // Done.
+                moveTarget = null;
+            }
+            else if (mustRecalculatePath || (nextMove - transform.position).sqrMagnitude <= speed * speed)
+            {
+                // Close enough to point. Need to recalc.
+                recalculatePath();
             }
 
-            transform.position = Vector3.MoveTowards(transform.position, mt, speed);
+            var v = Vector3.MoveTowards(transform.position, nextMove, speed);
+            //Debug.LogFormat("jj {0} -> kk {1}", transform.position, v);
+            return v;
         }
+
+        return transform.position;
     }
 
     public void MoveTo(IntVector2 iv2) { MoveTo(iv2.x, iv2.z); }
     public void MoveTo(int gridX, int gridZ)
     {
-        // TODO: pathfind!
+        moveTarget = new Vector3(gridX, transform.position.y, gridZ);
+        mustRecalculatePath = true;
 
-        if (!Grid.Get().IsBlocked(gridX, gridZ))
+        /*if (!Grid.Get().IsBlocked(gridX, gridZ))
         {
             //moveTarget = new Vector3(gridX, transform.position.y, gridZ);
             // TODO: better src!!!
@@ -62,13 +113,13 @@ public class Actor : AOCommon
         else
         {
             Messages.M("That path is blocked.");
-        }
+        }*/
     }
 
     public override void Load(Nini.Config.IConfig sav)
     {
         //
-        // TODO: update for multipath
+        // TODO: update for multipath // update for pre-post tick?
         //
 
         base.Load(sav);
@@ -77,6 +128,8 @@ public class Actor : AOCommon
             moveTarget = sav.GetVector3("Actor_moveTargetValue");
         else
             moveTarget = null;
+        if (moveTarget.HasValue)
+            mustRecalculatePath = true;
     }
 
     public override void Save(Nini.Config.IConfig sav)
