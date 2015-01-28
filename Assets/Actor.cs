@@ -8,7 +8,7 @@ using System.Linq;
 public class Actor : AOCommon
 {
     public float MoveSpeed;
-    private Vector3? moveTarget = null;
+    protected Vector3? moveTarget = null;
 
     private Vector3 nextMove;
 
@@ -85,6 +85,13 @@ public class Actor : AOCommon
             {
                 // Close enough to point. Need to recalc.
                 recalculatePath();
+
+                if (Rayman.Get().IsBlocked(nextMove.ToIntVector2()))
+                {
+                    Messages.M("[" + name + "] Path is blocked.");
+                    moveTarget = null;
+                    return transform.position;
+                }
             }
 
             var v = Vector3.MoveTowards(transform.position, nextMove, speed);

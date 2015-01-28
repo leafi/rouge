@@ -139,7 +139,8 @@ public class Grid : MonoBehaviour
     public bool IsBlocked(IntVector2 iv2) { return IsBlocked(iv2.x, iv2.z); }
     public bool IsBlocked(int gx, int gz)
     {
-        return Obstacles.Any((o) => o.Blocking && o.IntBounds.Contains(gx, gz));
+        //return Obstacles.Any((o) => o.Blocking && o.IntBounds.Contains(gx, gz));
+        return Rayman.Get().IsBlocked(gx, gz);
     }
 
     public static IntBounds CalculateIntBounds(Mesh mesh, Transform transform)

@@ -138,5 +138,13 @@ public class Rayman
 
         return results.ConvertAll<IntVector2>((gp) => new IntVector2(gp.x + offX, gp.y + offZ));
     }
+
+    public bool IsBlocked(IntVector2 gv) { return IsBlocked(gv.x, gv.z); }
+    public bool IsBlocked(int gx, int gz)
+    {
+        bool posInBoundsX = gx - offX >= 0 && gx - offX < Walkable.Length;
+        bool posInBoundsZ = gz - offZ >= 0 && gz - offZ < Walkable[0].Length;
+        return (!posInBoundsX || !posInBoundsZ) ? true : !Walkable[gx - offX][gz - offZ];
+    }
 }
 
