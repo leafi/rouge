@@ -26,7 +26,7 @@ public class SimpleMonsterActor : Actor
             if (timeSinceLastMove > 2f)
             {
                 var currentPos = transform.position.ToIntVector2();
-                var gridTarget = new IntVector2(currentPos.x + UnityEngine.Random.Range(-2, 2), currentPos.y + UnityEngine.Random.Range(-2, 2));
+                var gridTarget = new IntVector2(currentPos.x + UnityEngine.Random.Range(-2, 2), currentPos.z + UnityEngine.Random.Range(-2, 2));
                 this.MoveTo(gridTarget);
                 timeSinceLastMove = 0f;
             }
